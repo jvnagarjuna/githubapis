@@ -34,8 +34,7 @@ class GitHubAPIController extends Controller
      */
     public function storeGithubRepo(Request $request)
     {
-        //
-        // dd($request->name);
+
         $client = new \GuzzleHttp\Client();
         $request = $client->post('https://api.github.com/user/repos', [
             'headers' => [
@@ -45,8 +44,7 @@ class GitHubAPIController extends Controller
             ],
             'body' => json_encode(['name' => $request->name])
         ]);
-        // $response = $request->send();
-        // $repos = json_decode($request->getBody()->getContents(), true);
+
         return redirect()->route('get-all-github-repos');
     }
 
@@ -98,5 +96,24 @@ class GitHubAPIController extends Controller
         ]);
         $repos = json_decode($request->getBody()->getContents(), true);
         return view('repos.index', compact('repos'));
+    }
+
+    public function deletingGithubRepo()
+    {
+        return view('repos.delete');
+    }
+
+    public function deleteGithubRepo(Request $request)
+    {
+        $client = new \GuzzleHttp\Client();
+        $request = $client->delete('https://api.github.com/repos/' . env('GITHUB_USERNAME') . '/' . $request->name, [
+            'headers' => [
+                'content-type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
+            ],
+
+        ]);
+        return redirect()->route('get-all-github-repos');
     }
 }
