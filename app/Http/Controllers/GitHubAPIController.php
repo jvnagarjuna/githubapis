@@ -41,7 +41,7 @@ class GitHubAPIController extends Controller
             'headers' => [
                 'content-type' => 'application/json',
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . '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'
+                'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
             ],
             'body' => json_encode(['name' => $request->name])
         ]);
@@ -94,7 +94,7 @@ class GitHubAPIController extends Controller
     {
         $client = new \GuzzleHttp\Client();
         $request = $client->get('https://api.github.com/user/repos', [
-            'headers' => ['Authorization' => 'Bearer ' . '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'],
+            'headers' => ['Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')],
         ]);
         $repos = json_decode($request->getBody()->getContents(), true);
         return view('repos.index', compact('repos'));
