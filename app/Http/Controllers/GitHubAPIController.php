@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 
 class GitHubAPIController extends Controller
 {
@@ -35,17 +36,37 @@ class GitHubAPIController extends Controller
     public function storeGithubRepo(Request $request)
     {
 
-        $client = new \GuzzleHttp\Client();
-        $request = $client->post('https://api.github.com/user/repos', [
-            'headers' => [
-                'content-type' => 'application/json',
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
-            ],
-            'body' => json_encode(['name' => $request->name])
-        ]);
+        $rules = [
+            'name' => 'required',
+        ];
+        $customMessages = [
+            'name.required' => trans('Repo Name is required'),
+        ];
 
-        return redirect()->route('get-all-github-repos');
+        $this->validate($request, $rules, $customMessages);
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post('https://api.github.com/user/repos', [
+                'headers' => [
+                    'content-type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
+                ],
+                'body' => json_encode(['name' => $request->name])
+            ]);
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $errors = [];
+            $response = $e->getResponse();
+            $responseBody = json_decode($response->getBody()->getContents());
+            $errors['message'] = $responseBody->message;
+            if ($response->getStatusCode() == 422) {
+                $errors['info'] = $responseBody->errors[0]->message ?? 'Something went wrong';
+            }
+            return Redirect::back()->withInput()->withErrors($errors);
+        }
+
+        return redirect()->route('get-all-github-repos')->with('success', 'Repo created successfully.');
     }
 
     /**
@@ -90,11 +111,19 @@ class GitHubAPIController extends Controller
      */
     public function getAllGithubRepos()
     {
-        $client = new \GuzzleHttp\Client();
-        $request = $client->get('https://api.github.com/user/repos', [
-            'headers' => ['Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')],
-        ]);
-        $repos = json_decode($request->getBody()->getContents(), true);
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get('https://api.github.com/user/repos', [
+                'headers' => ['Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')],
+            ]);
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $errors = [];
+            $response = $e->getResponse();
+            $responseBody = json_decode($response->getBody()->getContents());
+            $errors['message'] = $responseBody->message;
+            return view('repos.index', compact('errors'));
+        }
+        $repos = json_decode($response->getBody()->getContents(), true);
         return view('repos.index', compact('repos'));
     }
 
@@ -105,15 +134,35 @@ class GitHubAPIController extends Controller
 
     public function deleteGithubRepo(Request $request)
     {
-        $client = new \GuzzleHttp\Client();
-        $request = $client->delete('https://api.github.com/repos/' . env('GITHUB_USERNAME') . '/' . $request->name, [
-            'headers' => [
-                'content-type' => 'application/json',
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
-            ],
+        $rules = [
+            'name' => 'required',
+        ];
+        $customMessages = [
+            'name.required' => trans('Repo Name is required'),
+        ];
 
-        ]);
-        return redirect()->route('get-all-github-repos');
+        $this->validate($request, $rules, $customMessages);
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->delete('https://api.github.com/repos/' . env('GITHUB_USERNAME') . '/' . $request->name, [
+                'headers' => [
+                    'content-type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . env('GITHUB_PERSONAL_ACCESS_TOKEN')
+                ],
+
+            ]);
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $errors = [];
+            $response = $e->getResponse();
+            $responseBody = json_decode($response->getBody()->getContents());
+            $errors['message'] = $responseBody->message;
+            if ($response->getStatusCode() == 422) {
+                $errors['info'] = $responseBody->errors[0]->message ?? 'Something went wrong';
+            }
+            return Redirect::back()->withInput()->withErrors($errors);
+        }
+        return redirect()->route('get-all-github-repos')->with('success', 'Repo deleted successfully.');
     }
 }

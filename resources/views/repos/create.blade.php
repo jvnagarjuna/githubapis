@@ -13,13 +13,24 @@
 <body>
 
     <div class="container">
+        <h3><a href="{{ route('get-all-github-repos') }}">Repositories List</a></h3>
+        @if (count($errors) > 0)
+        <div class="alert alert-danger">
+            <strong>Whoops!</strong> There were some problems with your input.<br><br>
+            <ul>
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
         <h2>Create Github Repo</h2>
         <form class="form-horizontal" action="{{ route('store-github-repo') }}" method="post">
             @csrf
             <div class="form-group">
                 <label class="control-label col-sm-2" for="name">Repo Name:</label>
                 <div class="col-sm-10">
-                    <input type="text" class="form-control" id="name" placeholder="Enter Repo name" name="name">
+                    <input type="text" class="form-control" id="name" value="{{ old('name') }}" placeholder="Enter Repo name" name="name">
                 </div>
             </div>
             <div class="form-group">

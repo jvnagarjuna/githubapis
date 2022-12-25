@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GitHubAPIController;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,9 +15,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return Redirect::route('get-all-github-repos');
+});
 
 // Route::get('get', 'DataController@getRequest');
 
@@ -25,6 +26,3 @@ Route::get('createGithubRepo', [GitHubAPIController::class, 'createGithubRepo'])
 Route::post('storeGithubRepo', [GitHubAPIController::class, 'storeGithubRepo'])->name('store-github-repo');
 Route::get('deletingGithubRepo', [GitHubAPIController::class, 'deletingGithubRepo'])->name('deleting-github-repo');
 Route::post('deleteGithubRepo', [GitHubAPIController::class, 'deleteGithubRepo'])->name('delete-github-repo');
-
-
-
